@@ -175,6 +175,7 @@ func main() {
 	muxServerHTTP := &http.Server{
 		Handler:           muxHandler,
 		ReadHeaderTimeout: time.Second * 5,
+		ConnContext:       dashboardConnectionContext,
 	}
 	muxServerHTTP.Protocols = new(http.Protocols)
 	muxServerHTTP.Protocols.SetHTTP1(true)
@@ -186,6 +187,7 @@ func main() {
 			Addr:              fmt.Sprintf("%s:%d", singleton.Conf.ListenHost, singleton.Conf.HTTPS.ListenPort),
 			Handler:           muxHandler,
 			ReadHeaderTimeout: time.Second * 5,
+			ConnContext:       dashboardConnectionContext,
 			TLSConfig: &tls.Config{
 				InsecureSkipVerify: singleton.Conf.HTTPS.InsecureTLS,
 			},
@@ -243,6 +245,7 @@ func wireNATDashboardCredentialGate() {
 
 func newHTTPandGRPCMux(httpHandler http.Handler, grpcHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		clearHTTP2HeaderDeadline(r)
 		natConfig := singleton.NATShared.GetNATConfigByDomain(r.Host)
 		if natConfig != nil {
 			if !natConfig.Enabled {

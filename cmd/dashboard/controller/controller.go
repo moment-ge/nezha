@@ -146,6 +146,7 @@ func routers(r *gin.Engine, frontendDist fs.FS) {
 	auth.GET("/ws/transfer", restScopeMiddleware(model.ScopeTransferRead), commonHandler(transferStream))
 
 	// service monitor
+	auth.GET("/service/:id/recent", restScopeMiddleware(model.ScopeServiceRead), commonHandler(getRecentICMP))
 	auth.GET("/service/list", restScopeMiddleware(model.ScopeServiceRead), listHandler(listService))
 	auth.POST("/service", restScopeMiddleware(model.ScopeServiceWrite), commonHandler(createService))
 	auth.PATCH("/service/:id", restScopeMiddleware(model.ScopeServiceWrite), commonHandler(updateService))

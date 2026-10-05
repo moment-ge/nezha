@@ -62,6 +62,7 @@ func canonicalRoutes() []scopedRoute {
 		{"POST", "/api/v1/transfer/{id}/retry", "nezha:transfer:write"},
 		{"GET", "/api/v1/ws/transfer", "nezha:transfer:read"},
 
+		{"GET", "/api/v1/service/{id}/recent", "nezha:service:read"},
 		{"GET", "/api/v1/service/list", "nezha:service:read"},
 		{"POST", "/api/v1/service", "nezha:service:write"},
 		{"PATCH", "/api/v1/service/{id}", "nezha:service:write"},

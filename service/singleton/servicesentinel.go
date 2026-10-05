@@ -170,8 +170,9 @@ type ServiceSentinel struct {
 	serviceCurrentStatusData     map[uint64]*serviceTaskStatus    // 当前任务结果缓存
 	serviceResponseDataStore     map[uint64]serviceResponseData   // 当前数据
 
-	serviceResponsePing                   map[uint64]map[uint64]*pingStore // guarded by serviceResponseDataStoreLock; [service_id] -> ClientID -> delay
-	tlsCertCache                          map[uint64]string                // guarded by serviceResponseDataStoreLock
+	recentICMP                            map[uint64]map[uint64][]icmpSample // guarded by serviceResponseDataStoreLock
+	serviceResponsePing                   map[uint64]map[uint64]*pingStore   // guarded by serviceResponseDataStoreLock; [service_id] -> ClientID -> delay
+	tlsCertCache                          map[uint64]string                  // guarded by serviceResponseDataStoreLock
 	serviceReportValidatedHook            func(uint64)
 	loadStatsResponseLockedHook           func()
 	serviceReportBeforeTLSSideEffectsHook func(uint64)
@@ -489,6 +490,8 @@ func (ss *ServiceSentinel) Update(m *model.Service) error {
 		ss.serviceCurrentStatusData[m.ID].result = make([]serviceWindowBucket, 0, _CurrentStatusSize)
 		ss.serviceStatusToday[m.ID] = &_TodayStatsOfService{}
 	}
+	// A changed target must not inherit loss samples from the previous target.
+	delete(ss.recentICMP, m.ID)
 	// 更新这个任务
 	ss.services[m.ID] = m
 	return nil
@@ -507,6 +510,7 @@ func (ss *ServiceSentinel) Delete(ids []uint64) {
 		delete(ss.serviceCurrentStatusData, id)
 		delete(ss.serviceResponseDataStore, id)
 		delete(ss.serviceResponsePing, id)
+		delete(ss.recentICMP, id)
 		delete(ss.tlsCertCache, id)
 		delete(ss.serviceStatusToday, id)
 
@@ -702,6 +706,9 @@ func (ss *ServiceSentinel) processReport(r ReportData, serverShared *ServerClass
 		return
 	}
 	cs = currentService
+	if mh.Type == model.TaskTypeICMPPing {
+		ss.recordICMPLocked(mh.GetId(), r.Reporter, mh, time.Now())
+	}
 
 	if mh.Type == model.TaskTypeTCPPing || mh.Type == model.TaskTypeICMPPing {
 		// TCP/ICMP Ping 使用平均值计算后再写入
