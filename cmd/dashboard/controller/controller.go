@@ -97,6 +97,7 @@ func routers(r *gin.Engine, frontendDist fs.FS) {
 
 	optionalAuth.GET("/service", restScopeMiddleware(model.ScopeServiceRead), commonHandler(showService))
 	optionalAuth.GET("/service/server", restScopeMiddleware(model.ScopeServiceRead), commonHandler(listServerWithServices))
+	optionalAuth.GET("/service/:id/recent", restScopeMiddleware(model.ScopeServiceRead), commonHandler(getRecentICMP))
 	optionalAuth.GET("/service/:id/history", restScopeMiddleware(model.ScopeServiceRead), commonHandler(getServiceHistory))
 	optionalAuth.GET("/server/:id/service", restScopeMiddleware(model.ScopeServiceRead), commonHandler(listServerServices))
 	optionalAuth.GET("/server/:id/metrics", restScopeMiddleware(model.ScopeServerRead), commonHandler(getServerMetrics))
@@ -146,7 +147,6 @@ func routers(r *gin.Engine, frontendDist fs.FS) {
 	auth.GET("/ws/transfer", restScopeMiddleware(model.ScopeTransferRead), commonHandler(transferStream))
 
 	// service monitor
-	auth.GET("/service/:id/recent", restScopeMiddleware(model.ScopeServiceRead), commonHandler(getRecentICMP))
 	auth.GET("/service/list", restScopeMiddleware(model.ScopeServiceRead), listHandler(listService))
 	auth.POST("/service", restScopeMiddleware(model.ScopeServiceWrite), commonHandler(createService))
 	auth.PATCH("/service/:id", restScopeMiddleware(model.ScopeServiceWrite), commonHandler(updateService))
