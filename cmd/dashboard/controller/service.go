@@ -135,7 +135,26 @@ func listService(c *gin.Context) ([]*model.Service, error) {
 		return nil, err
 	}
 
+	for i, service := range ss {
+		ss[i] = serviceForList(service)
+	}
+
 	return ss, nil
+}
+
+// serviceForList keeps optional collections usable by the dashboard's form and table.
+func serviceForList(service *model.Service) *model.Service {
+	copy := *service
+	if copy.FailTriggerTasks == nil {
+		copy.FailTriggerTasks = []uint64{}
+	}
+	if copy.RecoverTriggerTasks == nil {
+		copy.RecoverTriggerTasks = []uint64{}
+	}
+	if copy.SkipServers == nil {
+		copy.SkipServers = map[uint64]bool{}
+	}
+	return &copy
 }
 
 // Get service history
